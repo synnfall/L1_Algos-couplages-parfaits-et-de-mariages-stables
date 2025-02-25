@@ -2,3 +2,5 @@
 main
 prog
 *.o
+*.py
+test.c
