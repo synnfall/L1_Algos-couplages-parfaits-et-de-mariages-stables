@@ -80,31 +80,35 @@ int formations_complete(formation** lst_formations, int nb_forms)
     return complete;
 }
 
-int tout_les_etudiant_ont_formation(eleves** lst_elvs, int nb_elvs)
-{
-    int complete = 1;
-    int i = 0;
-    while (i <nb_elvs && complete)
-    {
-        eleves* current_elv = lst_elvs[i];
-        if(! current_elv->etablissement)
-        {
-            int y = 0;
-            while(y < current_elv->nb_voeux && complete)
-            {
-                if(!est_formation_complete(current_elv->voeux[y]))
-                {
-                    complete = 0;
-                }
-                y++;
-            }
+// int tout_les_etudiant_ont_formation(eleves** lst_elvs, int nb_elvs)
+// {
+//     int complete = 1;
+//     int i = 0;
+//     while (i <nb_elvs && complete)
+//     {
+//         eleves* current_elv = lst_elvs[i];
+//         if(! current_elv->etablissement)
+//         {
+//             int y = 0;
+//             while(y < current_elv->nb_voeux && complete)
+//             {
+//                 if(!est_formation_complete(current_elv->voeux[y]))
+//                 {
+//                     complete = 0;
+//                 }
+//                 else if(get_max_tas_bin(current_elv->voeux[y]->places) > get_indice_pref_elvs(current_elv->voeux[y], current_elv))
+//                 {
+//                     complete = 0;
+//                 }
+//                 y++;
+//             }
 
-        }
-        i++;
+//         }
+//         i++;
 
-    }
-    return complete;
-}
+//     }
+//     return complete;
+// }
 
 eleves* get_eleves_sans_formation(eleves** lst_elvs, int nb_elvs)
 {
@@ -115,6 +119,10 @@ eleves* get_eleves_sans_formation(eleves** lst_elvs, int nb_elvs)
             for (int y = 0; y < lst_elvs[i]->nb_voeux; y++)
             {
                 if( ! est_formation_complete(lst_elvs[i]->voeux[y]))
+                {
+                    return lst_elvs[i];
+                }
+                else if(get_max_tas_bin(lst_elvs[i]->voeux[y]->places) > get_indice_pref_elvs(lst_elvs[i]->voeux[y], lst_elvs[i]))
                 {
                     return lst_elvs[i];
                 }
@@ -151,7 +159,7 @@ int get_indice_pref_elvs(formation* form, eleves* elvs)
 
 int get_max_tas_bin(elvs_places* tas_bin)
 {
-    return tas_bin[0].elvs;
+    return tas_bin[0].classement;
 }
 
 void insere_elt_dans_form_non_pleine(formation* form, elvs_places elvs_pl)
@@ -185,14 +193,14 @@ void insere_elt_dans_form_plein(formation* form, elvs_places elvs_pl)
         {
             if(places[suivant_g].classement > places[suivant_d].classement)
             {
-                if(places[indice].classement > places[suivant_g].classement)
+                if(places[indice].classement < places[suivant_g].classement)
                 {
                     elvs_places temps = places[indice];
                     places[indice] = places[suivant_g];
                     places[suivant_g] = temps;
                     indice = suivant_g;   
                 }
-                else if(places[indice].classement > places[suivant_d].classement)
+                else if(places[indice].classement < places[suivant_d].classement)
                 {
                     elvs_places temps = places[indice];
                     places[indice] = places[suivant_d];
@@ -205,14 +213,14 @@ void insere_elt_dans_form_plein(formation* form, elvs_places elvs_pl)
                 }
             }
             else{ 
-                if(places[indice].classement > places[suivant_d].classement)
+                if(places[indice].classement < places[suivant_d].classement)
                 {
                     elvs_places temps = places[indice];
                     places[indice] = places[suivant_d];
                     places[suivant_d] = temps;
                     indice = suivant_d;  
                 }
-                else if(places[indice].classement > places[suivant_g].classement)
+                else if(places[indice].classement < places[suivant_g].classement)
                 {
                     elvs_places temps = places[indice];
                     places[indice] = places[suivant_g];
@@ -225,7 +233,7 @@ void insere_elt_dans_form_plein(formation* form, elvs_places elvs_pl)
                 }
             }
         }
-        else if(places[indice].classement > places[suivant_g].classement)
+        else if(places[indice].classement < places[suivant_g].classement)
         {
             elvs_places temps = places[indice];
             places[indice] = places[suivant_g];
@@ -244,10 +252,10 @@ void insere_elt_dans_form_plein(formation* form, elvs_places elvs_pl)
 
 void attribue_formation(eleves** lst_elvs, int nb_elvs, formation** lst_formations, int nb_forms)
 {
-    while( !formations_complete(lst_formations,nb_forms) && !tout_les_etudiant_ont_formation(lst_elvs, nb_elvs))
+    eleves* elvs = get_eleves_sans_formation(lst_elvs, nb_elvs);
+    while(! (elvs==0))
     {
-        affichage(lst_elvs, nb_elvs, lst_formations, nb_forms);
-        eleves* elvs = get_eleves_sans_formation(lst_elvs, nb_elvs);
+        //affichage(lst_elvs, nb_elvs, lst_formations, nb_forms);
         int i = 0;
         while (i < elvs->nb_voeux && elvs->etablissement==0)
         {
@@ -274,14 +282,14 @@ void attribue_formation(eleves** lst_elvs, int nb_elvs, formation** lst_formatio
                 elvs->voeux[i]->nb_places_prises++;
             }
             i++;
-            //affichage(lst_elvs, nb_elvs, lst_formations, nb_forms);
         }
+        elvs = get_eleves_sans_formation(lst_elvs, nb_elvs);
     }
 }
 
 void attribue_elvs(eleves** lst_elvs, int nb_elvs, formation** lst_formations, int nb_forms)
 {
-    while( !formations_complete(lst_formations,nb_forms) && !tout_les_etudiant_ont_formation(lst_elvs, nb_elvs))
+    while( !formations_complete(lst_formations,nb_forms))
     {
         
     }
@@ -419,11 +427,11 @@ int main()
 {
     seed = time(NULL);
 
-    int nb_elvs = 25;
-    int nb_voeux = 3;
+    int nb_elvs = 50;
+    int nb_voeux = 2;
 
-    int nb_forms = 4;
-    int nb_places = 6;
+    int nb_forms = 9;
+    int nb_places = 5;
 
     eleves** lst_elvs = cree_elvs(nb_elvs, nb_voeux);
     formation** lst_forms = cree_forms(nb_forms, nb_places, nb_elvs);
@@ -432,6 +440,7 @@ int main()
     set_elvs_pref_random(lst_elvs, nb_elvs, lst_forms, nb_forms);
 
     
-    affichage(lst_elvs, nb_elvs, lst_forms, nb_forms);
     attribue_formation(lst_elvs, nb_elvs, lst_forms, nb_forms);
+    affichage(lst_elvs, nb_elvs, lst_forms, nb_forms);
+    return 0;
 }
