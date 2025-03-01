@@ -206,10 +206,9 @@ void remove_elv_form_places(formation* form, eleves* elv_pl)
 {
     elvs_places* nv_tas = malloc(sizeof(elvs_places*)*form->nb_places);
     elvs_places* old_tas = form->places;
-    int nb_places = form->nb_places;
     form->nb_places_prises = 0;
     form->places = nv_tas;
-    for (int y = 0; y < nb_places; y++)
+    for (int y = 0; y < form->nb_places; y++)
     {
         nv_tas[y].elvs = NULL;
     }
