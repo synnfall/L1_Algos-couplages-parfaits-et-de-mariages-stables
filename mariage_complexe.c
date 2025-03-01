@@ -139,8 +139,7 @@ void insere_elt_dans_form_plein(formation* form, elvs_places elvs_pl)
     int indice = 0;
     int suivant_g = 1;
     int suivant_d = 2;
-    int est_bien_place = 0;
-    while( suivant_g < form->nb_places && ! est_bien_place )
+    while( suivant_g < form->nb_places)
     {
         if(suivant_d < form->nb_places)
         {
@@ -162,7 +161,7 @@ void insere_elt_dans_form_plein(formation* form, elvs_places elvs_pl)
                 }
                 else
                 {
-                    est_bien_place = 1;
+                    return;
                 }
             }
             else{ 
@@ -182,7 +181,7 @@ void insere_elt_dans_form_plein(formation* form, elvs_places elvs_pl)
                 }
                 else
                 {
-                    est_bien_place = 1;
+                    return;
                 }
             }
         }
@@ -195,12 +194,33 @@ void insere_elt_dans_form_plein(formation* form, elvs_places elvs_pl)
         }
         else
         {
-            est_bien_place = 1;
+            return;
         }
         
         suivant_g = indice*2+1;
         suivant_d = indice*2+2;
     }
+}
+
+void remove_elv_form_places(formation* form, eleves* elv_pl)
+{
+    elvs_places* nv_tas = malloc(sizeof(elvs_places*)*form->nb_places);
+    elvs_places* old_tas = form->places;
+    int nb_places = form->nb_places;
+    form->nb_places_prises = 0;
+    form->places = nv_tas;
+    for (int y = 0; y < nb_places; y++)
+    {
+        nv_tas[y].elvs = NULL;
+    }
+    for (int i = 0; i < form->nb_places; i++)
+    {
+        if(old_tas[i].elvs!=elv_pl)
+        {
+            insere_elt_dans_form_non_pleine(form, old_tas[i]);
+        }
+    }
+    free(old_tas);
 }
 
 void attribue_formation(eleves** lst_elvs, int nb_elvs)
@@ -282,16 +302,37 @@ formation* get_formations_pas_complete(formation** lst_formations, int nb_forms)
         }
         
     }
-    
     return 0;
 }
 
-void attribue_elvs(eleves** lst_elvs, int nb_elvs, formation** lst_formations, int nb_forms)
+void attribue_elvs(formation** lst_formations, int nb_forms)
 {
     formation* form = get_formations_pas_complete(lst_formations, nb_forms);
     while( form!=0)
     {
-        
+        for (int i = 0; i < form->nb_eleves_pref; i++)
+        {
+            eleves* elv = form->prefs[i];
+            int pref_i = get_indice_voeux_form(elv, form);
+            if(pref_i!=-1)
+            {
+                if (elv->etablissement==0)
+                {
+                    elv->etablissement = form;
+                    insere_elt_dans_form_non_pleine(form, (elvs_places) {elv, i});
+                }
+                else
+                {
+                    if (pref_i < get_indice_voeux_form(elv,elv->etablissement))
+                    {
+                        remove_elv_form_places(elv->etablissement, elv);
+                        elv->etablissement = form;
+                        insere_elt_dans_form_non_pleine(form, (elvs_places) {elv, i});
+                    }
+                }
+            }
+        }
+        form = get_formations_pas_complete(lst_formations, nb_forms);
     }
 }
 
@@ -439,6 +480,8 @@ int main(int argc, char *argv[])
     attribue_voeux_random(lst_elvs, nb_elvs, lst_forms, nb_forms);
     set_elvs_pref_random(lst_elvs, nb_elvs, lst_forms, nb_forms);
 
+    //attribue_formation(lst_elvs, nb_elvs);
+    attribue_elvs(lst_forms, nb_forms);
     affichage(lst_elvs, nb_elvs, lst_forms, nb_forms);
     return 0;
 }
