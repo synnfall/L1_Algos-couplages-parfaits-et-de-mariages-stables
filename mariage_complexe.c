@@ -480,7 +480,7 @@ int main(int argc, char *argv[])
     set_elvs_pref_random(lst_elvs, nb_elvs, lst_forms, nb_forms);
 
     //attribue_formation(lst_elvs, nb_elvs);
-    //attribue_elvs(lst_forms, nb_forms);
+    attribue_elvs(lst_forms, nb_forms);
     affichage(lst_elvs, nb_elvs, lst_forms, nb_forms);
     return 0;
 }
