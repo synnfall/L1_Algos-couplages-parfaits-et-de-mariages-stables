@@ -33,10 +33,10 @@ struct _eleves
 struct _elvs_places
 {
     eleves* elvs;
-    int classement
+    int classement;
 };
 
-uint32_t random(int inf, int sup)
+uint32_t alea(int inf, int sup)
 {
 
     seed ^= seed << 13;
@@ -50,7 +50,7 @@ void shuffle(void **array, int size)
 {
     for (int i = size - 1; i > 0; i--) 
     {
-        int j = random(0, size-1);
+        int j = alea(0, size-1);
 
         void * temp = array[i];
         array[i] = array[j];
@@ -61,6 +61,35 @@ void shuffle(void **array, int size)
 int est_formation_complete(formation* form)
 {
     return !(form->nb_places_prises < form->nb_places);
+}
+
+int get_max_tas_bin(elvs_places* tas_bin)
+{
+    return tas_bin[0].classement;
+}
+
+int get_indice_place_elvs(formation* form, eleves* elv)
+{
+    for (int i = 0; i < form->nb_places_prises; i++)
+    {
+        if(elv == form->places[i].elvs)
+        {
+            return i;
+        }
+    }
+    return form->nb_places_prises;
+}
+
+int get_indice_pref_elvs(formation* form, eleves* elvs)
+{
+    for (int i = 0; i < form->nb_eleves_pref; i++)
+    {
+        if(form->prefs[i] == elvs)
+        {
+            return i;
+        }
+    }
+    return form->nb_eleves_pref;
 }
 
 eleves* get_eleves_sans_formation(eleves** lst_elvs, int nb_elvs)
@@ -84,34 +113,6 @@ eleves* get_eleves_sans_formation(eleves** lst_elvs, int nb_elvs)
     }
     return 0;
     
-}
-
-int get_indice_place_elvs(formation* form, eleves* elv)
-{
-    for (int i = 0; i < form->nb_places_prises; i++)
-    {
-        if(elv == form->places[i].elvs)
-        {
-            return i;
-        }
-    }
-}
-
-int get_indice_pref_elvs(formation* form, eleves* elvs)
-{
-    for (int i = 0; i < form->nb_eleves_pref; i++)
-    {
-        if(form->prefs[i] == elvs)
-        {
-            return i;
-        }
-    }
-    return form->nb_eleves_pref;
-}
-
-int get_max_tas_bin(elvs_places* tas_bin)
-{
-    return tas_bin[0].classement;
 }
 
 void insere_elt_dans_form_non_pleine(formation* form, elvs_places elvs_pl)
@@ -204,7 +205,6 @@ void insere_elt_dans_form_plein(formation* form, elvs_places elvs_pl)
 
 void remove_elv_form_places(formation* form, eleves* elv_pl)
 {
-    printf("debut\n");
     elvs_places* nv_tas = malloc(sizeof(elvs_places)*form->nb_places);
     elvs_places* old_tas = form->places;
     form->nb_places_prises = 0;
@@ -215,23 +215,21 @@ void remove_elv_form_places(formation* form, eleves* elv_pl)
     }
     for (int i = 0; i < form->nb_places; i++)
     {
-        if(old_tas[i].elvs!=elv_pl)
+        if(old_tas[i].elvs!=elv_pl && old_tas[i].elvs != NULL)
         {
-            printf("insere\n");
             insere_elt_dans_form_non_pleine(form, old_tas[i]);
-            printf("fin insere\n");
         }
     }
-    if (old_tas==NULL)
-    {
-        printf("oldtas est null\n");
-    }
-    else
-    {
-        printf("old tas est pas NULL\n");
-    }
-    free(old_tas);
-    printf("fin\n");
+    // if (old_tas==NULL)
+    // {
+    //     printf("oldtas est null\n");
+    // }
+    // else
+    // {
+    //     printf("old tas est pas NULL\n");
+    // }
+    // free(old_tas);
+    // printf("fin\n");
 }
 
 void attribue_formation(eleves** lst_elvs, int nb_elvs)
@@ -250,18 +248,15 @@ void attribue_formation(eleves** lst_elvs, int nb_elvs)
                 {
                     eleves* elvs_a_remplacer = elvs->voeux[i]->prefs[i_plus_ptite_pref];
 
-                    //a refaire
-                    int i_place_a_remplacer = get_indice_place_elvs(elvs->voeux[i], elvs_a_remplacer);
-
                     elvs_a_remplacer->etablissement = 0;
                     elvs->etablissement = elvs->voeux[i];
-                    insere_elt_dans_form_plein(elvs->voeux[i], (elvs_places){elvs, get_indice_pref_elvs(elvs->voeux[i],elvs)});
+                    insere_elt_dans_form_plein(elvs->voeux[i], (elvs_places){ .elvs = elvs, .classement = get_indice_pref_elvs(elvs->voeux[i],elvs)});
                 }
             }
             else
             {
                 elvs->etablissement = elvs->voeux[i];
-                insere_elt_dans_form_non_pleine(elvs->voeux[i], (elvs_places){elvs, get_indice_pref_elvs(elvs->voeux[i],elvs)});
+                insere_elt_dans_form_non_pleine(elvs->voeux[i], (elvs_places){ .elvs = elvs, .classement = get_indice_pref_elvs(elvs->voeux[i],elvs)});
             }
             i++;
         }
@@ -269,7 +264,7 @@ void attribue_formation(eleves** lst_elvs, int nb_elvs)
     }
 }
 
-int get_indice_voeux_form(eleves* elv, formation* form)
+int get_indice_voeux_form(eleves* elv, formation* form) //probleme
 {
     for (int i = 0; i < elv->nb_voeux; i++)
     {
@@ -290,8 +285,16 @@ formation* get_formations_pas_complete(formation** lst_formations, int nb_forms)
         {
             for (int i = 0; i < form->nb_eleves_pref; i++)
             {
+                printf("form elv:%p", form->prefs[i]);
+            }
+            
+            for (int i = 0; i < form->nb_eleves_pref; i++)
+            {
                 eleves* elv = form->prefs[i];
+                printf("cherche voeux\n");
+                printf("elvs : %p, form : %p\n", elv, form);
                 int pref_i = get_indice_voeux_form(elv, form);
+                printf("trouve voeux\n");
                 if(pref_i!=-1) //on verifie que la formation est un voeux de l'elv
                 {
                     if (elv->etablissement==0)
@@ -309,7 +312,6 @@ formation* get_formations_pas_complete(formation** lst_formations, int nb_forms)
                     
                 }
             }
-            
         }
         
     }
@@ -328,10 +330,10 @@ void attribue_elvs(formation** lst_formations, int nb_forms)
             if(pref_i!=-1)
             {
                 
-                if (elv->etablissement==0)
+                if (elv->etablissement==NULL)
                 {
                     elv->etablissement = form;
-                    insere_elt_dans_form_non_pleine(form, (elvs_places) {elv, i});
+                    insere_elt_dans_form_non_pleine(form, (elvs_places) { .elvs = elv, .classement = i});
                 }
                 else
                 {
@@ -339,7 +341,7 @@ void attribue_elvs(formation** lst_formations, int nb_forms)
                     {
                         remove_elv_form_places(elv->etablissement, elv);
                         elv->etablissement = form;
-                        insere_elt_dans_form_non_pleine(form, (elvs_places) {elv, i});
+                        insere_elt_dans_form_non_pleine(form, (elvs_places) { .elvs = elv, .classement = i});
                     }
                 }
             }
@@ -360,11 +362,11 @@ void** cree_cp_lst(void** lst, int nb)
 
 void attribue_voeux_random(eleves** lst_elvs, int nb_evls, formation** lst_form, int nb_form)
 {
-    formation** lst_cp_forms = cree_cp_lst(lst_form, nb_form);
+    formation** lst_cp_forms = (formation **) cree_cp_lst((void **)lst_form, nb_form);
     for (int i = 0; i < nb_evls; i++)
     {
         
-        shuffle(lst_cp_forms, nb_form);
+        shuffle( (void**) lst_cp_forms, nb_form);
     
         for (int j = 0; j < lst_elvs[i]->nb_voeux; j++)
         {
@@ -376,10 +378,10 @@ void attribue_voeux_random(eleves** lst_elvs, int nb_evls, formation** lst_form,
 
 void set_elvs_pref_random(eleves** lst_elvs, int nb_evls, formation** lst_form, int nb_form)
 {
-    eleves** lst_cp_elvs = cree_cp_lst(lst_elvs, nb_evls);
+    eleves** lst_cp_elvs = (eleves**) cree_cp_lst( (void**) lst_elvs, nb_evls);
     for (int i = 0; i < nb_form; i++)
     {
-        shuffle(lst_cp_elvs, nb_evls);
+        shuffle( (void**) lst_cp_elvs, nb_evls);
 
         for (int y = 0; y < nb_evls; y++)
         {
@@ -429,7 +431,6 @@ void affichage(eleves** lst_elvs, int nb_elvs, formation** lst_forms, int nb_for
 {
     for (int i = 0; i < nb_elvs; i++)
     {
-        int etab_name;
         if(lst_elvs[i]->etablissement==NULL)
         {
             printf("evls%d : Pas de formation attribue\n", lst_elvs[i]->nom);
@@ -475,7 +476,7 @@ void affichage(eleves** lst_elvs, int nb_elvs, formation** lst_forms, int nb_for
     }
 }
 
-int main(int argc, char *argv[])
+int main()
 {
     seed = time(NULL);
 
@@ -492,6 +493,12 @@ int main(int argc, char *argv[])
     set_elvs_pref_random(lst_elvs, nb_elvs, lst_forms, nb_forms);
 
     //attribue_formation(lst_elvs, nb_elvs);
+    //affichage(lst_elvs, nb_elvs, lst_forms, nb_forms);
+    for (int i = 0; i < nb_elvs; i++)
+    {
+        printf("elv%d : %p\n", i+1, lst_elvs[i]);
+    }
+    
     attribue_elvs(lst_forms, nb_forms);
     affichage(lst_elvs, nb_elvs, lst_forms, nb_forms);
     return 0;
