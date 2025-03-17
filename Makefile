@@ -16,3 +16,6 @@ simple:
 c:
 	$(CC) mariage_complexe.c -o $(EXEC) -Wextra -Wall
 	./$(EXEC)
+
+clean:
+	$(RM)
