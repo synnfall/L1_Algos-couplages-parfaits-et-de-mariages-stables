@@ -17,5 +17,9 @@ c:
 	$(CC) mariage_complexe.c -o $(EXEC) -Wextra -Wall
 	./$(EXEC)
 
+g:
+	$(CC) couple_graph_biparti.c -o $(EXEC) -Wextra -Wall
+	./$(EXEC)
+
 clean:
 	$(RM)
