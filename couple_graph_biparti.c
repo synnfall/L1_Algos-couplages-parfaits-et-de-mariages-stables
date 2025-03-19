@@ -131,6 +131,9 @@ void affichage(g_biparti graph)
         {
             printf("noeud_g%d - couple: noeud_d%d\n", noeud->name, noeud->couple->name);
         }
+        if (noeud->nb_voisin==0) {
+            printf("\tsans voisin");
+        }
         for (int y = 0; y<noeud->nb_voisin; y++)
         {
             printf("\tnoeud_d%d", noeud->voisin[y]->name);    
@@ -149,12 +152,62 @@ void affichage(g_biparti graph)
         {
             printf("noeud_d%d - couple: noeud_d%d\n", noeud->name, noeud->couple->name);
         }
+        if (noeud->nb_voisin==0) {
+            printf("\tsans voisin");
+        }
         for (int y = 0; y<noeud->nb_voisin; y++)
         {
             printf("\tnoeud_d%d", noeud->voisin[y]->name);    
         }
         printf("\n");
     }
+}
+int attribue_cpl_naif(g_biparti graph)
+{
+    int nb_cpl = 0;
+    for (int i=0; i<graph.nb_noeuds_gauche; i++)
+    {
+        noeuds* noeud = graph.gauche[i];
+        for (int y=0; y<noeud->nb_voisin; y++) {
+            if (noeud->voisin[y]->couple==NULL) {
+                noeud->couple = noeud->voisin[y];
+                noeud->couple->couple = noeud;
+                nb_cpl++;
+                break;
+            }
+        }
+    }
+    return nb_cpl;
+}
+
+noeuds* get_noeuds_sans_couple(noeuds** lst_noeuds, int nb_noeuds)
+{
+    for (int i = 0; i<nb_noeuds; i++) {
+        if (lst_noeuds[i]->couple==NULL) {
+            return lst_noeuds[i];
+        }
+    }
+    return NULL;
+}
+
+int trouve_chemin_augmentant(noeuds* noeud)
+{
+    return 0;
+}
+
+int attribue_le_plus_de_couple(g_biparti graph)
+{
+    int nb_cpl = attribue_cpl_naif(graph);
+    int ancient_nb_cpl;
+    do
+    {
+        noeuds* noeud = get_noeuds_sans_couple(graph.gauche, graph.nb_noeuds_gauche);
+        if(noeud==NULL) return nb_cpl;
+        ancient_nb_cpl = nb_cpl;
+
+        nb_cpl = trouve_chemin_augmentant(noeud);
+    } while (ancient_nb_cpl < nb_cpl);
+    return nb_cpl;
 }
 
 int main()
@@ -166,6 +219,11 @@ int main()
 
     g_biparti graph = creer_graph_bi_parti(nb_noeuds_gauche, nb_noeuds_droite);
     donne_voisin_alea(graph);
+
+    int nb_cpl = attribue_le_plus_de_couple(graph);
+    
+    //affichage(graph);
+    printf("on termine avec %d couples\n", nb_cpl);
     affichage(graph);
     return 0;
 }
