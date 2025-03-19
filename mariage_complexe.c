@@ -205,31 +205,15 @@ void insere_elt_dans_form_plein(formation* form, elvs_places elvs_pl)
 
 void remove_elv_form_places(formation* form, eleves* elv_pl)
 {
-    elvs_places* nv_tas = malloc(sizeof(elvs_places)*form->nb_places);
-    elvs_places* old_tas = form->places;
-    form->nb_places_prises = 0;
-    form->places = nv_tas;
-    for (int y = 0; y < form->nb_places; y++)
-    {
-        nv_tas[y].elvs = NULL;
-    }
     for (int i = 0; i < form->nb_places; i++)
     {
-        if(old_tas[i].elvs!=elv_pl && old_tas[i].elvs != NULL)
-        {
-            insere_elt_dans_form_non_pleine(form, old_tas[i]);
+        if(form->places[i].elvs==elv_pl)
+        {   
+            form->places[i] = form->places[form->nb_places_prises];
+            form->places[form->nb_places_prises].elvs = NULL;
+            form->nb_places_prises--;
         }
     }
-    // if (old_tas==NULL)
-    // {
-    //     printf("oldtas est null\n");
-    // }
-    // else
-    // {
-    //     printf("old tas est pas NULL\n");
-    // }
-    // free(old_tas);
-    // printf("fin\n");
 }
 
 void attribue_formation(eleves** lst_elvs, int nb_elvs)
@@ -264,7 +248,7 @@ void attribue_formation(eleves** lst_elvs, int nb_elvs)
     }
 }
 
-int get_indice_voeux_form(eleves* elv, formation* form) //probleme
+int get_indice_voeux_form(eleves* elv, formation* form)
 {
     for (int i = 0; i < elv->nb_voeux; i++)
     {
@@ -283,10 +267,6 @@ formation* get_formations_pas_complete(formation** lst_formations, int nb_forms)
         formation* form = lst_formations[i];
         if (! est_formation_complete(form))
         {
-            for (int i = 0; i < form->nb_eleves_pref; i++)
-            {
-                printf("form elv:%p", form->prefs[i]);
-            }
             
             for (int i = 0; i < form->nb_eleves_pref; i++)
             {
@@ -315,6 +295,7 @@ formation* get_formations_pas_complete(formation** lst_formations, int nb_forms)
         }
         
     }
+    printf("fini\n");
     return 0;
 }
 
@@ -333,7 +314,8 @@ void attribue_elvs(formation** lst_formations, int nb_forms)
                 if (elv->etablissement==NULL)
                 {
                     elv->etablissement = form;
-                    insere_elt_dans_form_non_pleine(form, (elvs_places) { .elvs = elv, .classement = i});
+                    form->places[form->nb_places_prises] = (elvs_places) { .elvs = elv, .classement = i};
+                    form->nb_places_prises++;
                 }
                 else
                 {
@@ -341,7 +323,8 @@ void attribue_elvs(formation** lst_formations, int nb_forms)
                     {
                         remove_elv_form_places(elv->etablissement, elv);
                         elv->etablissement = form;
-                        insere_elt_dans_form_non_pleine(form, (elvs_places) { .elvs = elv, .classement = i});
+                        form->places[form->nb_places_prises] = (elvs_places) { .elvs = elv, .classement = i};
+                        form->nb_places_prises++;
                     }
                 }
             }
@@ -455,7 +438,7 @@ void affichage(eleves** lst_elvs, int nb_elvs, formation** lst_forms, int nb_for
     printf("\n");
     for (int i = 0; i < nb_forms; i++)
     {
-        printf("form%d :\n", i+1);
+        printf("form%d :  (%d elvs %d)\n", i+1, lst_forms[i]->nb_places_prises, lst_forms[i]->nb_places);
 
         for (int y = 0; y < lst_forms[i]->nb_places; y++)
         {
@@ -494,10 +477,6 @@ int main()
 
     //attribue_formation(lst_elvs, nb_elvs);
     //affichage(lst_elvs, nb_elvs, lst_forms, nb_forms);
-    for (int i = 0; i < nb_elvs; i++)
-    {
-        printf("elv%d : %p\n", i+1, lst_elvs[i]);
-    }
     
     attribue_elvs(lst_forms, nb_forms);
     affichage(lst_elvs, nb_elvs, lst_forms, nb_forms);
