@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 #include <time.h>
 
 uint32_t seed;
@@ -43,7 +44,7 @@ uint32_t alea(int inf, int sup)
     seed ^= seed >> 17;
     seed ^= seed << 5;
 
-    return seed%(sup+1) + inf;
+    return inf + (seed % (sup - inf + 1));
 }
 
 void shuffle(void **array, int size)
@@ -203,15 +204,15 @@ void insere_elt_dans_form_plein(formation* form, elvs_places elvs_pl)
     }
 }
 
-void remove_elv_form_places(formation* form, eleves* elv_pl)
+void remove_elv_form_places(formation* form, eleves* elv_pl) /* le problème */
 {
     for (int i = 0; i < form->nb_places; i++)
     {
         if(form->places[i].elvs==elv_pl)
         {   
-            form->places[i] = form->places[form->nb_places_prises];
-            form->places[form->nb_places_prises].elvs = NULL;
             form->nb_places_prises--;
+            form->places[i] = form->places[form->nb_places_prises];
+            form->places[form->nb_places_prises].elvs = 0;
         }
     }
 }
@@ -219,7 +220,7 @@ void remove_elv_form_places(formation* form, eleves* elv_pl)
 void attribue_formation(eleves** lst_elvs, int nb_elvs)
 {
     eleves* elvs = get_eleves_sans_formation(lst_elvs, nb_elvs);
-    while( elvs!=0)
+    while( elvs!=0 )
     {
         int i = 0;
         while (i < elvs->nb_voeux && elvs->etablissement==0)
@@ -271,10 +272,7 @@ formation* get_formations_pas_complete(formation** lst_formations, int nb_forms)
             for (int i = 0; i < form->nb_eleves_pref; i++)
             {
                 eleves* elv = form->prefs[i];
-                printf("cherche voeux\n");
-                printf("elvs : %p, form : %p\n", elv, form);
                 int pref_i = get_indice_voeux_form(elv, form);
-                printf("trouve voeux\n");
                 if(pref_i!=-1) //on verifie que la formation est un voeux de l'elv
                 {
                     if (elv->etablissement==0)
@@ -464,7 +462,7 @@ int main()
     seed = time(NULL);
 
     int nb_elvs = 40;
-    int nb_voeux = 2;
+    int nb_voeux = 9;
 
     int nb_forms = 9;
     int nb_places = 5;
@@ -474,11 +472,11 @@ int main()
 
     attribue_voeux_random(lst_elvs, nb_elvs, lst_forms, nb_forms);
     set_elvs_pref_random(lst_elvs, nb_elvs, lst_forms, nb_forms);
-
+    printf("ici\n");
     //attribue_formation(lst_elvs, nb_elvs);
     //affichage(lst_elvs, nb_elvs, lst_forms, nb_forms);
     
     attribue_elvs(lst_forms, nb_forms);
-    affichage(lst_elvs, nb_elvs, lst_forms, nb_forms);
+    //affichage(lst_elvs, nb_elvs, lst_forms, nb_forms);
     return 0;
 }
